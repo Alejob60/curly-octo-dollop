@@ -1,0 +1,45 @@
+steps:
+  - id: build-frontend
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -f
+      - frontend/Dockerfile
+      - -t
+      - us-central1-docker.pkg.dev/$PROJECT_ID/orbital-prime-frontend/orbital-prime-frontend:$BUILD_ID
+      - -t
+      - us-central1-docker.pkg.dev/$PROJECT_ID/orbital-prime-frontend/orbital-prime-frontend:latest
+      - .
+
+  - id: push-frontend
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - us-central1-docker.pkg.dev/$PROJECT_ID/orbital-prime-frontend/orbital-prime-frontend:latest
+    waitFor:
+      - build-frontend
+
+  - id: deploy-frontend
+    name: gcr.io/cloud-builders/gcloud
+    args:
+      - run
+      - deploy
+      - orbital-prime-frontend
+      - --image=us-central1-docker.pkg.dev/$PROJECT_ID/orbital-prime-frontend/orbital-prime-frontend:latest
+      - --region=us-central1
+      - --platform=managed
+      - --allow-unauthenticated
+      - --port=8080
+      - --memory=512Mi
+      - --cpu=1
+      - --min-instances=0
+      - --max-instances=3
+      - --project=$PROJECT_ID
+    waitFor:
+      - push-frontend
+
+images:
+  - us-central1-docker.pkg.dev/$PROJECT_ID/orbital-prime-frontend/orbital-prime-frontend:$BUILD_ID
+  - us-central1-docker.pkg.dev/$PROJECT_ID/orbital-prime-frontend/orbital-prime-frontend:latest
+
+timeout: 1800s

@@ -1,0 +1,84 @@
+{# Plantilla Premium V61.2 - Oficio de Traslado Interno #}
+
+{# Header Institucional #}
+<div class="header">
+    <h1>Alcaldía de Santiago de Cali</h1>
+    <div class="subheader">{{ pdf_from_dependency | upper }}</div>
+    <div class="radicado">Oficio No. TR-{{ radicado }}</div>
+</div>
+
+{# Sello QR de Verificación #}
+{% if qr_code_base64 %}
+<div class="qr-container">
+    <img src="data:image/png;base64,{{ qr_code_base64 }}" alt="QR de Verificación">
+    <div class="label">Validación Interoperable</div>
+</div>
+{% endif %}
+
+<div class="title">TRASLADO ADMINISTRATIVO POR COMPETENCIA TÉCNICA</div>
+
+<div class="section">
+    <table class="data-table">
+        <tr>
+            <td class="label">Para:</td>
+            <td class="value"><strong>{{ pdf_to_dependency | upper }}</strong></td>
+        </tr>
+        <tr>
+            <td class="label">De:</td>
+            <td class="value">{{ pdf_from_dependency }}</td>
+        </tr>
+        <tr>
+            <td class="label">Fecha:</td>
+            <td class="value">{{ fecha_generacion }}</td>
+        </tr>
+        <tr>
+            <td class="label">Asunto:</td>
+            <td class="value">Traslado de PQRSD Radicado No. {{ radicado }}</td>
+        </tr>
+    </table>
+</div>
+
+{# Motivación del traslado #}
+<div class="section">
+    <div class="section-title">I. Justificación del Traslado</div>
+    <div class="section-content">
+        {{ soporte_traslado }}
+    </div>
+</div>
+
+{# Antecedentes #}
+<div class="section">
+    <div class="section-title">II. Resumen de la Solicitud</div>
+    <div class="highlight">
+        "{{ motivo }}"
+    </div>
+</div>
+
+{# Fundamentación Legal #}
+<div class="section">
+    <div class="section-title">III. Fundamento Jurídico del Traslado</div>
+    <div class="legal-citation">
+        <strong>Ley 1437 de 2011 - Art. 21</strong> (Sustituido por Ley 1755 de 2015): 
+        <span>"Funcionario incompetente. Si la autoridad a quien se dirige la petición no es la competente, deberá informarlo de inmediato al interesado si este actúa verbalmente, o dentro de los cinco (5) días siguientes a la recepción, si la petición fue por escrito."</span>
+    </div>
+</div>
+
+{# Instrucciones #}
+<div class="section no-break">
+    <div class="section-title">IV. Requerimiento a la Dependencia Destino</div>
+    <p>Se remite la presente para que, en cumplimiento de sus funciones legales y técnicas, proceda con el análisis y respuesta de fondo al ciudadano <strong>{{ nombres }} {{ apellidos }}</strong>.</p>
+    <p>El término de respuesta para esta solicitud es de <strong>15 días hábiles</strong>.</p>
+</div>
+
+{# Firma Digital Estándar #}
+<div class="signature">
+    <div class="signature-line"></div>
+    <p class="signature-name">OFICINA DE TRASLADOS Y COORDINACIÓN</p>
+    <p class="signature-role">Firma Electrónica Autorizada por GCP-KMS</p>
+</div>
+
+<div class="footer">
+    <p>Este documento es un registro oficial del sistema <strong>Orbital Prime Engine</strong></p>
+    <p class="hash-tag">Registro de Traslado ID: {{ hash | default('SHA-256 Verified') }}</p>
+    <p>Gestión Pública Transparente - Cali, Valle del Cauca</p>
+</div>

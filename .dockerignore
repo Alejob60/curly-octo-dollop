@@ -1,0 +1,60 @@
+# Python virtual environments
+.venv/
+.venv312/
+venv/
+env/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.py[cod]
+*$py.class
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Git
+.git/
+.gitignore
+
+# GitHub
+.github/
+
+# Build artifacts
+build/
+dist/
+frontend/node_modules/
+frontend/dist/
+*.egg-info/
+
+# Logs
+*.log
+
+# Tests (optional)
+test_*.py
+demo_*.py
+
+# Documentation (optional)
+documentacion/
+documentation/
+GOV_DOCUMENTATION/
+
+# Terraform
+terraform/
+
+# Temporary files
+*.tmp
+tmp/
+temp/
+
+# Cloud build config (optional - don't include in image)
+cloudbuild*.yaml
+.gcloudignore
+Dockerfile

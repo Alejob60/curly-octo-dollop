@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background:
+    radial-gradient(circle at top, rgba(244, 211, 94, 0.1), transparent 32%),
+    linear-gradient(180deg, #09111f 0%, #132238 55%, #0b1424 100%);
+  font-family: "Segoe UI", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+.react-flow__node {
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(9, 17, 31, 0.82);
+  color: #f5efe3;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2);
+}
+
+.react-flow__edge-path {
+  stroke: #f4d35e;
+  stroke-width: 2;
+}
+
+.react-flow__controls button,
+.react-flow__attribution {
+  background: rgba(9, 17, 31, 0.92);
+  color: #f5efe3;
+}

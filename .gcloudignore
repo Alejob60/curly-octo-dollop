@@ -1,0 +1,69 @@
+# Python virtual environments
+.venv/
+.venv312/
+venv/
+env/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.py[cod]
+*$py.class
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment files (keep .env.production only)
+.env
+.env.local
+.env.*.local
+.env.production.local.example
+
+# Build artifacts
+build/
+dist/
+frontend/node_modules/
+frontend/dist/
+*.egg-info/
+.eggs/
+
+# Cloud Build cache
+.BuildCache/
+
+# Terraform
+terraform/.terraform/
+terraform/*.tfstate*
+
+# Logs and databases
+*.log
+*.db
+*.sqlite
+
+# Temporary files
+*.tmp
+tmp/
+temp/
+
+# Test files (optional - keep for deployment validation)
+# test_*.py
+# demo_*.py
+
+# Git
+.git/
+.gitignore
+
+# GitHub
+.github/
+
+# Documentation (optional - can exclude to speed up)
+# documentacion/
+# documentation/
+# GOV_DOCUMENTATION/
+# *.md

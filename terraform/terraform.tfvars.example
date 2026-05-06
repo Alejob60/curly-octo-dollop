@@ -1,0 +1,19 @@
+# Example Terraform Variables File (terraform.tfvars)
+# Copy this file to terraform/terraform.tfvars and update with your values
+
+gcp_project_id = "your-gcp-project-id"
+gcp_region     = "us-central1"
+environment    = "production"
+service_name   = "orbital-prime-api"
+app_version    = "latest"
+
+enable_monitoring  = true
+enable_cloud_trace = true
+
+cloud_run_memory = "2Gi"
+cloud_run_cpu    = "2"
+min_instances    = 1
+max_instances    = 100
+
+# Custom domain (optional)
+# custom_domain = "api.yourdomain.com"

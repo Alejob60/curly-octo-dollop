@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  api:
+    build: .
+    image: gcr.io/${GCP_PROJECT_ID}/orbital-prime-api:latest
+    ports:
+      - "8000:8000"
+    env_file: .env
+    environment:
+      - NODE_ENV=production
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/copilot-engine/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: always
+    networks:
+      - internal_govtech
+
+  worker:
+    build: .
+    command: celery -A app.workers.celery_worker worker --loglevel=info
+    env_file: .env
+    depends_on:
+      - redis
+      - db
+    restart: always
+    networks:
+      - internal_govtech
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    networks:
+      - internal_govtech
+    volumes:
+      - redis_data:/data
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: orbital_prime
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5432:5442"
+    networks:
+      - internal_govtech
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+networks:
+  internal_govtech:
+    driver: bridge
+
+volumes:
+  redis_data:
+  postgres_data:

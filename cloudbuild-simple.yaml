@@ -1,0 +1,59 @@
+# Cloud Build - Orbital Prime Simple Deployment
+# Builds orbital-prime-api Docker image and deploys to Cloud Run
+# Uses Artifact Registry (us-central1-docker.pkg.dev) for image storage
+
+steps:
+  # Step 1: Build Docker image
+  - id: 'build'
+    name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/orbital-prime-api/orbital-prime-api:latest'
+      - '-t'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/orbital-prime-api/orbital-prime-api:$BUILD_ID'
+      - '-f'
+      - 'Dockerfile'
+      - '.'
+
+  # Step 2: Push Docker image to Artifact Registry
+  - id: 'push'
+    name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/orbital-prime-api/orbital-prime-api:latest'
+    waitFor: ['build']
+
+  # Step 3: Deploy to Cloud Run
+  - id: 'deploy'
+    name: 'gcr.io/cloud-builders/run'
+    args:
+      - 'deploy'
+      - 'orbital-prime-api'
+      - '--image=us-central1-docker.pkg.dev/$PROJECT_ID/orbital-prime-api/orbital-prime-api:latest'
+      - '--region=us-central1'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--memory=2Gi'
+      - '--cpu=2'
+      - '--timeout=3600'
+      - '--port=3001'
+      - '--max-instances=5'
+      - '--min-instances=1'
+      - '--set-env-vars=MONGODB_PROVIDER=cosmos,AI_PROVIDER=vertex'
+      - '--no-gen2'
+    waitFor: ['push']
+
+# Push images to Artifact Registry
+images:
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/orbital-prime-api/orbital-prime-api:latest'
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/orbital-prime-api/orbital-prime-api:$BUILD_ID'
+
+# Build timeout
+timeout: '1800s'
+
+# Build options
+options:
+  machineType: 'N1_HIGHCPU_8'
+  logging: CLOUD_LOGGING_ONLY
+  substitutionOption: 'ALLOW_LOOSE'

@@ -1,0 +1,99 @@
+{# Plantilla Premium V61.2 - Memorial de Requerimiento #}
+
+{# Header Institucional #}
+<div class="header">
+    <h1>Alcaldía de Santiago de Cali</h1>
+    <div class="subheader">{{ dependencia_gestora | upper }}</div>
+    <div class="radicado">Radicado No. {{ radicado }}</div>
+</div>
+
+{# Sello QR de Verificación #}
+{% if qr_code_base64 %}
+<div class="qr-container">
+    <img src="data:image/png;base64,{{ qr_code_base64 }}" alt="QR de Verificación">
+    <div class="label">Escanee para validar integridad</div>
+</div>
+{% endif %}
+
+<div class="title">MEMORIAL DE REQUERIMIENTO CIUDADANO</div>
+
+{# Datos del Peticionario #}
+<div class="section no-break">
+    <div class="section-title">Datos del Peticionario</div>
+    <table class="data-table">
+        <tr>
+            <td class="label">Nombre completo:</td>
+            <td class="value">{{ nombres }} {{ apellidos }}</td>
+        </tr>
+        <tr>
+            <td class="label">Identificación:</td>
+            <td class="value">{{ documento }}</td>
+        </tr>
+        <tr>
+            <td class="label">Correo electrónico:</td>
+            <td class="value">{{ email }}</td>
+        </tr>
+        <tr>
+            <td class="label">Celular:</td>
+            <td class="value">{{ celular }}</td>
+        </tr>
+        <tr>
+            <td class="label">Dirección:</td>
+            <td class="value">{{ direccion or direccion_residencia }}</td>
+        </tr>
+    </table>
+</div>
+
+{# Solicitud original #}
+<div class="section">
+    <div class="section-title">I. Solicitud Original (Resumen Ejecutivo)</div>
+    <div class="highlight">
+        "{{ motivo }}"
+    </div>
+</div>
+
+{# Relato técnico #}
+<div class="section">
+    <div class="section-title">II. Relato Técnico de los Hechos</div>
+    <div class="section-content">
+        {{ hechos_extraidos }}
+    </div>
+</div>
+
+{# Fundamentación jurídica #}
+<div class="section">
+    <div class="section-title">III. Fundamentación Jurídica (Grounding)</div>
+    {% if citas_verificables is iterable and citas_verificables is not string and citas_verificables|length > 0 %}
+        {% for cita in citas_verificables %}
+        <div class="legal-citation">
+            <strong>{{ cita.citacion_formato }} - Art. {{ cita.articulo }}</strong> ({{ cita.ente_emisor }}): 
+            <span>"{{ cita.texto_relevante }}"</span>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="legal-citation">
+            <strong>Ley 1755 de 2015</strong>: Regula el Derecho de Petición en Colombia. 
+            <span>"Toda persona tiene derecho a presentar peticiones respetuosas a las autoridades por motivos de interés general o particular y a obtener pronta resolución."</span>
+        </div>
+    {% endif %}
+</div>
+
+{# Trámite y términos #}
+<div class="section no-break">
+    <div class="section-title">IV. Trámite y Términos Legales</div>
+    <p>La presente solicitud se tramita bajo el marco legal de la <strong>Ley 1755 de 2015</strong>. El plazo máximo de respuesta es de 15 días hábiles a partir de la fecha de radicación.</p>
+    <p>Se requiere a la dependencia <strong>{{ dependencia_gestora }}</strong> proceder con el análisis de fondo y emitir respuesta oficial al ciudadano.</p>
+</div>
+
+{# Footer con Firma #}
+<div class="signature">
+    <div class="signature-line"></div>
+    <p class="signature-name">{{ nombres }} {{ apellidos }}</p>
+    <p class="signature-role">C.C. {{ documento }}</p>
+</div>
+
+<div class="footer">
+    <p>Este documento fue generado automáticamente por <strong>Orbital Prime Engine V61.2</strong></p>
+    <p class="hash-tag">Hash de Integridad: {{ hash | default('SHA-256 Verified by GCP') }}</p>
+    <p>Alcaldía de Santiago de Cali - Transformación Digital</p>
+</div>
