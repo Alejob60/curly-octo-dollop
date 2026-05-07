@@ -1,99 +1,92 @@
-{# Plantilla Premium V61.2 - Memorial de Requerimiento #}
+{% extends "base_layout.j2" %}
 
-{# Header Institucional #}
-<div class="header">
-    <h1>Alcaldía de Santiago de Cali</h1>
-    <div class="subheader">{{ dependencia_gestora | upper }}</div>
-    <div class="radicado">Radicado No. {{ radicado }}</div>
-</div>
+{% macro clean_text(text) %}
+  {% if text %}
+    {{ text | replace('Le y', 'Ley') | replace('p ersonal', 'personal') | replace('ca p acitación', 'capacitación') | replace('hi g iénicas', 'higiénicas') | replace('CAPA CITA CION', 'CAPACITACION') | replace('mani p ulador', 'manipulador') | replace('p rácticas', 'prácticas') | replace('o p ortuno', 'oportuno') | replace('Com p rende', 'Comprende') | replace('ex p uesto', 'expuesto') | replace('com p etente', 'competente') | replace('res p uesta', 'respuesta') | replace('p ublicidad', 'publicidad') | replace('diri ge', 'dirige') | replace('correspo ndiente', 'correspondiente') | trim }}
+  {% else %}
+    Texto no disponible
+  {% endif %}
+{% endmacro %}
 
-{# Sello QR de Verificación #}
-{% if qr_code_base64 %}
-<div class="qr-container">
-    <img src="data:image/png;base64,{{ qr_code_base64 }}" alt="QR de Verificación">
-    <div class="label">Escanee para validar integridad</div>
-</div>
-{% endif %}
-
-<div class="title">MEMORIAL DE REQUERIMIENTO CIUDADANO</div>
-
-{# Datos del Peticionario #}
-<div class="section no-break">
-    <div class="section-title">Datos del Peticionario</div>
-    <table class="data-table">
-        <tr>
-            <td class="label">Nombre completo:</td>
-            <td class="value">{{ nombres }} {{ apellidos }}</td>
-        </tr>
-        <tr>
-            <td class="label">Identificación:</td>
-            <td class="value">{{ documento }}</td>
-        </tr>
-        <tr>
-            <td class="label">Correo electrónico:</td>
-            <td class="value">{{ email }}</td>
-        </tr>
-        <tr>
-            <td class="label">Celular:</td>
-            <td class="value">{{ celular }}</td>
-        </tr>
-        <tr>
-            <td class="label">Dirección:</td>
-            <td class="value">{{ direccion or direccion_residencia }}</td>
-        </tr>
-    </table>
-</div>
-
-{# Solicitud original #}
-<div class="section">
-    <div class="section-title">I. Solicitud Original (Resumen Ejecutivo)</div>
-    <div class="highlight">
-        "{{ motivo }}"
+{% block content %}
+    <div class="header">
+        <h1>MEMORIAL DE REQUERIMIENTO CIUDADANO</h1>
+        <p style="margin-top:10px; font-weight:bold;">Radicado No. {{ radicado }}</p>
     </div>
-</div>
 
-{# Relato técnico #}
-<div class="section">
-    <div class="section-title">II. Relato Técnico de los Hechos</div>
-    <div class="section-content">
-        {{ hechos_extraidos }}
+    <!-- DATOS CORREGIDOS -->
+    <div class="section">
+        <div class="section-title">DATOS DEL PETICIONARIO</div>
+        <div class="content">
+            <table class="data-table">
+                <tr>
+                    <td class="label">Nombre completo:</td>
+                    <td class="value">{{ clean_text(nombres) }} {{ clean_text(apellidos) }}</td>
+                </tr>
+                <tr>
+                    <td class="label">Identificación:</td>
+                    <td class="value">{{ documento }}</td>
+                </tr>
+                <tr>
+                    <td class="label">Correo electrónico:</td>
+                    <td class="value">{{ email }}</td>
+                </tr>
+                <tr>
+                    <td class="label">Celular:</td>
+                    <td class="value">{{ celular }}</td>
+                </tr>
+                <tr>
+                    <td class="label">Dirección:</td>
+                    <td class="value">{{ direccion or direccion_residencia }}</td>
+                </tr>
+            </table>
+        </div>
     </div>
-</div>
 
-{# Fundamentación jurídica #}
-<div class="section">
-    <div class="section-title">III. Fundamentación Jurídica (Grounding)</div>
-    {% if citas_verificables is iterable and citas_verificables is not string and citas_verificables|length > 0 %}
-        {% for cita in citas_verificables %}
-        <div class="legal-citation">
-            <strong>{{ cita.citacion_formato }} - Art. {{ cita.articulo }}</strong> ({{ cita.ente_emisor }}): 
-            <span>"{{ cita.texto_relevante }}"</span>
+    <!-- I. SOLICITUD -->
+    <div class="section">
+        <div class="section-title">I. SOLICITUD ORIGINAL</div>
+        <div class="content">
+            <p class="highlight">"{{ clean_text(motivo) | default('Trámite PQRSD solicitado') }}"</p>
         </div>
-        {% endfor %}
-    {% else %}
-        <div class="legal-citation">
-            <strong>Ley 1755 de 2015</strong>: Regula el Derecho de Petición en Colombia. 
-            <span>"Toda persona tiene derecho a presentar peticiones respetuosas a las autoridades por motivos de interés general o particular y a obtener pronta resolución."</span>
+    </div>
+
+    <!-- II. RELATO DE HECHOS -->
+    <div class="section">
+        <div class="section-title">II. RELATO TÉCNICO DE LOS HECHOS</div>
+        <div class="content">
+            {% if hechos_extraidos and hechos_extraidos|length > 10 %}
+                {{ clean_text(hechos_extraidos) }}
+            {% else %}
+                <p>El ciudadano manifiesta los hechos descritos en la solicitud original para ser analizados por la dependencia competente de la Alcaldía de Cali.</p>
+            {% endif %}
         </div>
-    {% endif %}
-</div>
+    </div>
 
-{# Trámite y términos #}
-<div class="section no-break">
-    <div class="section-title">IV. Trámite y Términos Legales</div>
-    <p>La presente solicitud se tramita bajo el marco legal de la <strong>Ley 1755 de 2015</strong>. El plazo máximo de respuesta es de 15 días hábiles a partir de la fecha de radicación.</p>
-    <p>Se requiere a la dependencia <strong>{{ dependencia_gestora }}</strong> proceder con el análisis de fondo y emitir respuesta oficial al ciudadano.</p>
-</div>
+    <!-- III. FUNDAMENTACIÓN JURÍDICA (REUTILIZAR LOGICA DE LEYES) -->
+    <div class="section">
+        <div class="section-title">III. FUNDAMENTACIÓN JURÍDICA</div>
+        <div class="content">
+             <ul class="law-list">
+                {% if citas_verificables and citas_verificables is iterable and citas_verificables is not mapping %}
+                    {% for ley in citas_verificables %}
+                        {% if ley.articulo %}
+                            <li>
+                                <span class="law-cite">{{ clean_text(ley.citacion_formato) }} - Art. {{ ley.articulo }}:</span>
+                                "{{ clean_text(ley.texto_relevante) | truncate(250) }}"
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <li>Normativa general regulada por la Ley 1755 de 2015 sobre el Derecho de Petición.</li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
 
-{# Footer con Firma #}
-<div class="signature">
-    <div class="signature-line"></div>
-    <p class="signature-name">{{ nombres }} {{ apellidos }}</p>
-    <p class="signature-role">C.C. {{ documento }}</p>
-</div>
-
-<div class="footer">
-    <p>Este documento fue generado automáticamente por <strong>Orbital Prime Engine V61.2</strong></p>
-    <p class="hash-tag">Hash de Integridad: {{ hash | default('SHA-256 Verified by GCP') }}</p>
-    <p>Alcaldía de Santiago de Cali - Transformación Digital</p>
-</div>
+    <div class="signature">
+        <div class="signature-line"></div>
+        <p class="signature-name">{{ clean_text(nombres) }} {{ clean_text(apellidos) }}</p>
+        <p class="signature-role">C.C. {{ documento }}</p>
+    </div>
+{% endblock %}

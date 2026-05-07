@@ -16,13 +16,30 @@ from datetime import datetime
 # Configuración de Motores (Valkey Cloud)
 celery_app = Celery("orbital_worker", broker=settings.REDIS_URL, backend=settings.REDIS_URL)
 
+import sys
+
+# --- 🛡️ PROTOCOLO DE EVENT LOOP (Windows Fix) ---
+if sys.platform == 'win32':
+    asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+
 def _run_async(coro):
     """Ejecutor asíncrono seguro para Celery."""
-    try:
-        loop = asyncio.get_event_loop()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
+    if sys.platform == 'win32':
+        # Forzar Proactor para subprocesos (Playwright)
+        try:
+            loop = asyncio.get_event_loop()
+            if not isinstance(loop, asyncio.WindowsProactorEventLoopPolicy._loop_factory):
+                raise RuntimeError("Loop no es Proactor")
+        except:
+            loop = asyncio.WindowsProactorEventLoopPolicy().new_event_loop()
+            asyncio.set_event_loop(loop)
+    else:
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            
     return asyncio.get_event_loop().run_until_complete(coro)
 
 async def fetch_rag_context(query_text: str):
@@ -164,21 +181,35 @@ def task_notify_and_ledger(pqrsd_data: dict):
 
     return _run_async(finalize())
 
-# --- CAPA 4: PROCESAMIENTO E2E ASÍNCRONO ---
-@celery_app.task(name="task_finalize_and_sign_async")
-def task_finalize_and_sign_async(audit_data: dict, user_ip: str, session_id: str):
+@celery_app.task(name="pqrs.finalize", bind=True, max_retries=3)
+def finalize_pqrs_task(self, session_id: str):
+    """
+    Task asíncrona para finalizar expediente PQRS (V64.2).
+    """
     async def run_finalize():
-        from app.services.judicial_engine_service import judicial_engine
+        from app.services.pqrs_manager import pqrs_manager
+        from app.core.db_clients import redis_client
+        import json
         try:
-            logger.info(f"🚀 [WORKER] Iniciando Firma y Rehidratación GCP para sesión: {session_id}")
-            result = await judicial_engine.finalize_and_sign_pqrsd(
-                audit_data=audit_data,
-                user_ip=user_ip,
-                session_id=session_id
-            )
+            logger.info(f"🎯 [CELERY_TASK] Iniciando finalize para {session_id}")
+            
+            # Actualizar progreso inicial desde el worker
+            await redis_client.setex(f"progress:{session_id}", 300, json.dumps({
+                "progress": 5,
+                "message": "🔄 Procesador Administrativo activado...",
+                "status": "processing"
+            }))
+            
+            # Ejecutar lógica real
+            result = await pqrs_manager.finalize_pqrs(session_id)
+            
+            logger.success(f"✅ [CELERY_TASK] Completado exitosamente para {session_id}")
             return result
+            
         except Exception as e:
-            logger.error(f"❌ [WORKER] Fallo en radicación asíncrona GCP: {e}")
-            return {"status": "error", "message": str(e)}
+            logger.error(f"❌ [CELERY_TASK] Error en {session_id}: {e}")
+            # Marcar error en Redis para que el polling lo vea
+            await redis_client.setex(f"progress:{session_id}:error", 300, str(e))
+            raise e
 
     return _run_async(run_finalize())

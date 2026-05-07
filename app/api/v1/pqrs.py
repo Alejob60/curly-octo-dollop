@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Body, Request
+from fastapi import APIRouter, HTTPException, Body, Request, BackgroundTasks
 from typing import Any, Optional, Dict
 from pydantic import BaseModel
 from app.services.pqrs_manager import pqrs_manager
@@ -41,13 +41,38 @@ async def register_consent(
 @router.post("/analyze")
 async def analyze_pqrs(
     session_id: str = Body(..., embed=True),
-    message: str = Body(..., embed=True)
+    message: str = Body(..., embed=True),
+    background_tasks: BackgroundTasks = None
 ):
     try:
         logger.info(f"🔍 [IN_ANALYZE] session={session_id} | msg={message[:50]}...")
-        result = await pqrs_manager.analyze_initial_message(session_id, message)
-        logger.info(f"📤 [OUT_ANALYZE] response={json.dumps(result, indent=2)}")
-        return result
+        
+        # 1. Limpiar estados previos
+        await redis_client.delete(f"progress:{session_id}")
+        await redis_client.delete(f"progress:{session_id}:error")
+        await redis_client.delete(f"progress:{session_id}:complete")
+        
+        # 2. Extracción ultra-rápida (Heurística)
+        basic_data = await pqrs_manager.extract_basic_info(session_id, message)
+        
+        # 3. Guardar estado inicial inmediatamente
+        await pqrs_manager.save_initial_state(session_id, basic_data)
+        
+        # 4. Encolar procesamiento pesado (Vertex AI) en background
+        if background_tasks:
+            background_tasks.add_task(pqrs_manager.background_process_full_analysis, session_id, message)
+            # Marcar inicio de progreso
+            await redis_client.setex(f"progress:{session_id}", 300, json.dumps({
+                "progress": 5, "message": "🤖 Iniciando análisis jurídico inteligente...", "status": "processing"
+            }))
+        
+        # 5. Respuesta inmediata (<2s)
+        logger.info(f"📤 [OUT_ANALYZE] Inmediato | session={session_id}")
+        return {
+            "type": "card",
+            "cardType": "IdentityCard",
+            "data": basic_data
+        }
     except Exception as e:
         logger.error(f"🔥 Fallo en Análisis Primario: {e}")
         logger.error(traceback.format_exc())
@@ -65,6 +90,9 @@ async def update_pqrs_slot(request: SlotUpdateRequest):
     try:
         logger.info(f"📥 [IN_UPDATE-SLOT] session={session_id} | phase={request.current_phase} | slots={request.slots}")
         
+        # Limpiar errores de intentos fallidos previos si el usuario está re-intentando
+        await redis_client.delete(f"progress:{session_id}:error")
+
         # 🔥 FIX V63.8: Auto-confirmación Robusta
         session_state = await redis_client.hgetall(state_key)
         # Redis ya retorna strings (decode_responses=True)
@@ -92,19 +120,24 @@ async def update_pqrs_slot(request: SlotUpdateRequest):
             await redis_client.hset(state_key, "confirmado", "true")
             await redis_client.hset(state_key, "confirmed_at", datetime.datetime.utcnow().isoformat())
 
-        # Si estamos en fase 4 (Revisión) y ya confirma final, disparamos generación
-        is_confirmed_final = (await redis_client.hget(state_key, "confirmado")) in ["true", b"true"]
+        # Si el usuario mandó 'confirmado': True, intentamos finalizar sin importar la fase detectada
+        # para evitar el bloqueo por transición asíncrona
+        is_confirmed_final = str(slots.get("confirmado")).lower() in ["true", "1", "yes", "t"]
         
-        if current_phase == "fase_4_evidencia" and is_confirmed_final:
-             logger.success(f"🚀 [PHASE_4_COMPLETE] Iniciando generación para {session_id}")
+        if is_confirmed_final:
+             logger.success(f"🚀 [AUTO_FINALIZE] Iniciando generación por confirmación explícita para {session_id}")
              
-             # Card de progreso INICIAL (señal para el frontend)
+             # Limpiar estados de progreso previos para asegurar limpieza total
+             await redis_client.delete(f"progress:{session_id}")
+             await redis_client.delete(f"progress:{session_id}:complete")
+             
+             # Card de progreso INICIAL
              progress_response = {
                 "type": "card",
                 "cardType": "ProcessingCard",
                 "session_id": session_id,
                 "submessage": "Por favor espere mientras el Magistrado valida su expediente...",
-                "progress": 0,
+                "progress": 5,
                 "steps": [
                     "⏳ Rehidratando información...",
                     "⏳ Auditoría jurídica IA...",
@@ -113,11 +146,10 @@ async def update_pqrs_slot(request: SlotUpdateRequest):
                 ]
              }
              
-             # Ejecutar el TRABAJO REAL en background
-             import asyncio
-             asyncio.create_task(pqrs_manager.finalize_pqrs(session_id))
+             from app.tasks.pqrsd_tasks import finalize_pqrs_task
+             finalize_pqrs_task.delay(session_id)
              
-             logger.info(f"📤 [OUT_UPDATE-SLOT] returning ProcessingCard and starting real work in background")
+             logger.info(f"📤 [OUT_UPDATE-SLOT] returning ProcessingCard and task enqueued in Celery")
              return progress_response
 
         instruction = await pqrs_manager.get_next_ui_instruction(session_id)
@@ -135,6 +167,7 @@ async def get_progress(session_id: str):
         # 1. Verificar error
         error = await redis_client.get(f"progress:{session_id}:error")
         if error:
+            # Importante: No borrar el error aquí, dejar que el frontend lo lea y el backend lo limpie en el siguiente intento
             return {"status": "error", "progress": 0, "message": str(error)}
         
         # 2. Verificar completado
@@ -154,7 +187,9 @@ async def get_progress(session_id: str):
         if progress_raw:
             return json.loads(progress_raw) if isinstance(progress_raw, str) else json.loads(progress_raw.decode())
         
-        return {"status": "queued", "progress": 0, "message": "⏳ En cola..."}
+        # Si no hay nada, retornar un estado neutro que detenga el polling si el frontend es inteligente,
+        # o que al menos no indique una cola inexistente.
+        return {"status": "idle", "progress": 0, "message": "Esperando acción..."}
     except Exception as e:
         logger.error(f"❌ Error en get_progress: {e}")
         return {"status": "error", "progress": 0, "message": str(e)}
