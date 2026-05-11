@@ -48,6 +48,11 @@ class Settings(BaseSettings):
     AI_CHAT_MODEL: str = os.getenv("AI_CHAT_MODEL", "gemini-2.5-flash")
     AI_EMBEDDING_MODEL: str = os.getenv("AI_EMBEDDING_MODEL", "text-embedding-004")
     AI_EMBEDDING_DIMENSIONS: int = int(os.getenv("AI_EMBEDDING_DIMENSIONS", "768"))
+    AI_USE_MOCKS: bool = os.getenv("AI_USE_MOCKS", "false").lower() == "true"
+    STRICT_MODE: bool = True # Forzar validación Pydantic estricta (Módulo 2)
+    APP_VERSION: str = os.getenv("APP_VERSION", "V65.12")
+    MIN_CONFIDENCE_THRESHOLD: float = float(os.getenv("MIN_CONFIDENCE_THRESHOLD", "0.85"))
+    MAX_AI_RETRIES: int = int(os.getenv("MAX_AI_RETRIES", "2"))
 
     # === 🛡️ SEGURIDAD Y PRIVACIDAD (Habeas Data) ===
     JWT_SECRET: str = os.getenv("JWT_SECRET", "orbital-prime-sovereign-secret")

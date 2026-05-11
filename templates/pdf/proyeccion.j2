@@ -1,27 +1,19 @@
 {% extends "base_layout.j2" %}
 
-{% macro clean_text(text) %}
-  {% if text %}
-    {{ text | replace('Le y', 'Ley') | replace('p ersonal', 'personal') | replace('ca p acitación', 'capacitación') | replace('hi g iénicas', 'higiénicas') | replace('CAPA CITA CION', 'CAPACITACION') | replace('mani p ulador', 'manipulador') | replace('p rácticas', 'prácticas') | replace('o p ortuno', 'oportuno') | replace('Com p rende', 'Comprende') | replace('ex p uesto', 'expuesto') | replace('com p etente', 'competente') | replace('res p uesta', 'respuesta') | replace('p ublicidad', 'publicidad') | replace('diri ge', 'dirige') | replace('correspo ndiente', 'correspondiente') | trim }}
-  {% else %}
-    Texto no disponible
-  {% endif %}
-{% endmacro %}
-
 {% block content %}
     <!-- TÍTULO -->
     <div class="header">
         <h1>ALCALDÍA DE SANTIAGO DE CALI</h1>
-        <h2>{{ clean_text(pdf_dependency) | upper if pdf_dependency else "SECRETARÍA COMPETENTE" }}</h2>
+        <h2>{{ entidad_destino | upper }}</h2>
         <p style="margin-top:10px; font-weight:bold;">RADICADO No. {{ radicado }}</p>
     </div>
 
     <!-- DATOS PETICIONARIO -->
     <div class="section">
         <div class="content">
-            <strong>Señor(a):</strong> {{ clean_text(nombres) }} {{ clean_text(apellidos) }}<br>
-            <strong>Identificación:</strong> {{ documento }}<br>
-            <strong>Asunto:</strong> {{ clean_text(asunto) }}
+            <strong>Señor(a):</strong> {{ nombre_peticionario }}<br>
+            <strong>Identificación:</strong> {{ identificacion }}<br>
+            <strong>Asunto:</strong> {{ resumen_solicitud }}
         </div>
     </div>
 
@@ -29,21 +21,21 @@
     <div class="section">
         <div class="section-title">I. ANTECEDENTES</div>
         <div class="content">
-            {{ clean_text(borrador_proyeccion) | safe }}
+            {{ borrador_proyeccion | safe }}
         </div>
     </div>
 
-    <!-- II. FUNDAMENTOS JURÍDICOS (FIX DE LEYES) -->
+    <!-- II. FUNDAMENTOS JURÍDICOS -->
     <div class="section">
         <div class="section-title">II. FUNDAMENTOS JURÍDICOS</div>
         <div class="content">
             <ul class="law-list">
-                {% if citas_verificables and citas_verificables is iterable and citas_verificables is not mapping %}
+                {% if citas_verificables and citas_verificables is iterable %}
                     {% for ley in citas_verificables %}
                         {% if ley.articulo and ley.texto_relevante %}
                             <li>
-                                <span class="law-cite">{{ clean_text(ley.citacion_formato) }} - Art. {{ ley.articulo }} ({{ clean_text(ley.ente_emisor) }}):</span>
-                                "{{ clean_text(ley.texto_relevante) }}"
+                                <span class="law-cite">{{ ley.citacion_formato }} - Art. {{ ley.articulo }} ({{ ley.ente_emisor }}):</span>
+                                "{{ ley.texto_relevante }}"
                             </li>
                         {% endif %}
                     {% endfor %}
@@ -59,24 +51,14 @@
         <div class="section-title">III. RESOLUCIÓN</div>
         <div class="content">
             <p>En mérito de lo expuesto, la Secretaría competente RESUELVE:</p>
-            <p>{{ resolucion_texto | default("Dar respuesta de fondo a la solicitud del ciudadano.") }}</p>
-        </div>
-    </div>
-
-    {# Razonamiento de la IA Auditora #}
-    <div class="section no-break">
-        <div class="section-title">IV. Certificación de Calidad IA</div>
-        <div class="highlight">
-            <p><strong>Score de Calidad Técnica:</strong> {{ review_score | default('0.85') }} / 1.00</p>
-            <p><strong>Estado de Auditoría:</strong> Verificado por Gemini 2.5 Flash</p>
-            <p class="mt-10">Este borrador ha sido validado bajo los criterios de grounding legal, profundidad de sustancia y estructura administrativa oficial.</p>
+            <p>Dar respuesta de fondo a la solicitud del ciudadano en un término máximo de {{ plazo_dias }} días hábiles, conforme al canal de notificación {{ canal_notificacion }}.</p>
         </div>
     </div>
 
     {# Firmas Proyectadas #}
     <div class="signature">
         <div class="signature-line"></div>
-        <p class="signature-name">SISTEMA ORBITAL PRIME V64.2</p>
-        <p class="signature-role">Motor Judicial Multi-Agente</p>
+        <p class="signature-name">SECRETARÍA DE DESPACHO</p>
+        <p class="signature-role">Firma Electrónica Autorizada - Alcaldía de Cali</p>
     </div>
 {% endblock %}

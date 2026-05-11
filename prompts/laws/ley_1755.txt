@@ -1,0 +1,9 @@
+# 📜 TEMPLATE: LEY 1755 (PQRSD)
+OBJETIVO: Procesar solicitudes de información, quejas o reclamos generales.
+PLAZO: 15 días hábiles.
+ESTRUCTURA_JSON:
+{
+  "procedimiento": "Derecho de Petición",
+  "base_legal": "Ley 1755 de 2015",
+  "requiere_traslado": false
+}

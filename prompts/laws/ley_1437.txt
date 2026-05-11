@@ -1,0 +1,9 @@
+# 📜 TEMPLATE: LEY 1437 (CPACA)
+OBJETIVO: Procesar recursos de reposición o apelación administrativa.
+PLAZO: 30 días hábiles.
+ESTRUCTURA_JSON:
+{
+  "procedimiento": "Recurso Administrativo",
+  "base_legal": "Ley 1437 de 2011",
+  "requiere_traslado": true
+}

@@ -37,3 +37,7 @@ cryptography
 google-api-python-client
 jinja2
 playwright
+sse-starlette
+pytest-asyncio
+google-genai
+json-repair

@@ -65,7 +65,7 @@ class PrivacyShieldService:
                     tokenized_text = tokenized_text.replace(match, token_key)
             
             await session.commit()
-            logger.info(f"🛡️ Escudo V50.2: Texto anonimizado y CIFRADO para {session_id}.")
+            logger.info(f"🛡️ [PRIVACY] Tokenizado: session={session_id} | tokens_generados={len(set(matches)) + (1 if name_match else 0)}")
             return tokenized_text
 
     async def get_full_pii_mapping(self, session_id: str) -> dict:
@@ -76,7 +76,7 @@ class PrivacyShieldService:
             result = await session.execute(stmt)
             tokens = result.scalars().all()
             mapping = {t.token_key: crypto_service.decrypt(t.token_value) for t in tokens}
-            logger.debug(f"🔑 [SHIELD_MAP] Recuperados {len(mapping)} tokens para rehidratación.")
+            logger.info(f"🔓 [PRIVACY] Rehidratación: session={session_id} | tokens_restantes={len(mapping)}")
             return mapping
 
     async def rehydrate_text(self, session_id: str, anonymized_text: str) -> str:

@@ -1,0 +1,96 @@
+# 📂 ORBITAL_PRIME_MASTER_REGISTRY (V62.0)
+# Definición de flujos, documentos y extracción por tipo de caso.
+
+GLOBAL_RULES:
+  default_sla_days: 15
+  format: PDF_A
+  signature_required: true
+
+CASE_PROFILES:
+  - ID: "NULIDAD_COMPARENDO"
+    KEYWORDS: ["nulidad", "comparendo", "multa", "fotomulta", "simit", "no notificado", "placa"]
+    TARGET_DEPENDENCY: "Secretaría de Movilidad"
+    DEPENDENCY_ID: "4152"
+    PRIORITY: "MEDIA"
+    SLA_DAYS: 15
+    REQUIRED_DOCUMENTS:
+      - key: "memorial"
+        template: "memorial.j2"
+        folder: "01_Memorial_Radicado"
+      - key: "concepto_tecnico"
+        template: "proyeccion.j2" 
+        folder: "02_Concepto_Tecnico"
+      - key: "proyeccion_fallo"
+        template: "proyeccion.j2"
+        folder: "03_Proyeccion_Fallo"
+    EXTRACTION_FIELDS:
+      - "numero_comparendo"
+      - "fecha_infraccion"
+      - "placa_vehiculo"
+      - "causal_nulidad"
+
+  - ID: "CAPACITACION_SALUD"
+    KEYWORDS: ["capacitación", "capacitacion", "curso", "charla", "manipulación de alimentos", "manipulacion", "JAC", "salud pública"]
+    TARGET_DEPENDENCY: "Secretaría de Salud Pública"
+    DEPENDENCY_ID: "4135"
+    PRIORITY: "NORMAL"
+    SLA_DAYS: 15
+    REQUIRED_DOCUMENTS:
+      - key: "memorial"
+        template: "memorial.j2"
+        folder: "01_Memorial_Radicado"
+      - key: "traslado"
+        template: "traslado.j2"
+        folder: "02_Traslado_Competencia"
+      - key: "proyeccion"
+        template: "proyeccion.j2"
+        folder: "03_Proyeccion_Respuesta"
+      - key: "auto_programacion"
+        template: "auto_programacion.j2"
+        folder: "04_Auto_Programacion"
+      - key: "oficio_logistica"
+        template: "oficio_logistica.j2"
+        folder: "05_Oficio_Logistica"
+    EXTRACTION_FIELDS:
+      - "fecha_solicitada"
+      - "hora_solicitada"
+      - "nombre_entidad"
+      - "numero_participantes_estimado"
+
+  - ID: "INFRAESTRUCTURA_URGENCIA"
+    KEYWORDS: ["derrumbe", "bache", "hueco", "obstrucción", "vía tapada", "maquinaria", "riesgo", "accidente"]
+    TARGET_DEPENDENCY: "Secretaría de Infraestructura"
+    DEPENDENCY_ID: "4120"
+    PRIORITY: "ALTA"
+    SLA_DAYS: 1
+    REQUIRED_DOCUMENTS:
+      - key: "memorial"
+        template: "memorial.j2"
+        folder: "01_Memorial_Radicado"
+      - key: "auto_intervencion"
+        template: "proyeccion.j2"
+        folder: "02_Auto_Intervencion_Urgente"
+      - key: "oficio_maquinaria"
+        template: "oficio_logistica.j2"
+        folder: "03_Oficio_Maquinaria_Pesada"
+    EXTRACTION_FIELDS:
+      - "ubicacion_exacta"
+      - "nivel_riesgo"
+      - "tipo_daño"
+
+  - ID: "GENERIC_TRAMITE"
+    KEYWORDS: ["*"]
+    TARGET_DEPENDENCY: "Secretaría General"
+    DEPENDENCY_ID: "4131"
+    PRIORITY: "NORMAL"
+    SLA_DAYS: 15
+    REQUIRED_DOCUMENTS:
+      - key: "memorial"
+        template: "memorial.j2"
+        folder: "01_Memorial_Radicado"
+      - key: "proyeccion"
+        template: "proyeccion.j2"
+        folder: "02_Proyeccion_Respuesta"
+    EXTRACTION_FIELDS:
+      - "asunto_resumen"
+      - "peticion_clara"

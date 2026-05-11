@@ -101,8 +101,8 @@
     </div>
 
     <div class="footer">
-        <p>Documento generado por Orbital Prime Engine V64.2 - Alcaldía de Santiago de Cali</p>
-        <p class="hash-tag">Certificación de Integridad: {{ hash | default('SHA-256 Verified by Ledger') }}</p>
+        <p>Documento generado por Orbital Prime Engine {{ version_engine | default("V65.12") }} | Fecha: {{ fecha_generacion | default("N/A") }}</p>
+        <p class="hash-tag">Certificación de Integridad: {{ hash_documento | default('SHA-256 Verified by Ledger') }}</p>
     </div>
 </body>
 </html>

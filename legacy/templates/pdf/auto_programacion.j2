@@ -1,0 +1,60 @@
+{# Plantilla V61.3 - Auto de Programación Interna #}
+
+<div class="header">
+    <h1>ALCALDÍA DE SANTIAGO DE CALI</h1>
+    <div class="subheader">{{ dependencia_competente | upper }}</div>
+    <div class="radicado">AUTO DE PROGRAMACIÓN No. AUTO-{{ radicado }}</div>
+</div>
+
+{# Sello QR de Verificación #}
+{% if qr_code_base64 %}
+<div class="qr-container">
+    <img src="data:image/png;base64,{{ qr_code_base64 }}" alt="QR de Verificación">
+    <div class="label">Sello de Integridad Digital</div>
+</div>
+{% endif %}
+
+<div class="title">AUTO ADMINISTRATIVO DE PROGRAMACIÓN TÉCNICA</div>
+
+<div class="section-title">I. OBJETO</div>
+<div class="section-content">
+    Programar formalmente la jornada de capacitación y/o evento solicitado mediante el radicado No. <strong>{{ radicado }}</strong>, presentado por <strong>{{ nombre_entidad | default('la comunidad') }}</strong>.
+</div>
+
+<div class="section-title">II. PROGRAMACIÓN CONFIRMADA</div>
+<table class="data-table">
+    <tr>
+        <td class="label">Fecha y Hora:</td>
+        <td class="value">{{ fecha_confirmada | default('24 de octubre de 2025') }} - {{ hora_confirmada | default('14:00 - 16:00') }}</td>
+    </tr>
+    <tr>
+        <td class="label">Lugar:</td>
+        <td class="value">{{ lugar_confirmado | default('Sede Comunal / Auditorio Municipal') }}</td>
+    </tr>
+    <tr>
+        <td class="label">Cupos Disponibles:</td>
+        <td class="value">{{ cupos_disponibles | default('50') }} personas</td>
+    </tr>
+    <tr>
+        <td class="label">Instructor Asignado:</td>
+        <td class="value">{{ nombre_instructor | default('Equipo Técnico de Salud Pública') }}</td>
+    </tr>
+</table>
+
+<div class="section-title">III. DISPOSICIONES</div>
+<div class="section-content">
+    <p>1. Se instruye a la Subsecretaría correspondiente para garantizar los recursos logísticos y pedagógicos necesarios para el desarrollo de la actividad.</p>
+    <p>2. Se ordena la notificación al peticionario a través de la Proyección de Respuesta oficial generada por el sistema.</p>
+    <p>3. Incorporar el presente Auto al expediente electrónico inalterable en Bóveda Digital GCP.</p>
+</div>
+
+<div class="signature">
+    <div class="signature-line"></div>
+    <p class="signature-name">OFICINA DE PLANEACIÓN Y GESTIÓN</p>
+    <p class="signature-role">{{ dependencia_competente | default('Secretaría General') }}</p>
+</div>
+
+<div class="footer">
+    <p>Documento generado automáticamente por <strong>Orbital Prime Engine V61.3</strong></p>
+    <p class="hash-tag">Certificación de Trazabilidad: {{ hash | default('Verified by Ledger') }}</p>
+</div>

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        /* CONFIGURACIÓN DE PÁGINA */
+        @page {
+            size: letter;
+            margin: 2.5cm 2cm 2.5cm 2cm; /* Margen superior amplio para evitar que el QR tape el título */
+        }
+        body {
+            font-family: 'Arial', sans-serif;
+            font-size: 11pt;
+            line-height: 1.5;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* CABECERA */
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #0056b3;
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+        }
+        .header h1 { font-size: 16pt; color: #0056b3; margin: 0; }
+        .header h2 { font-size: 12pt; color: #555; margin: 5px 0 0 0; }
+
+        /* POSICIÓN DEL QR (FIX CRÍTICO: ANTI-OVERLAP & NO-CLIP) */
+        .qr-container {
+            position: absolute;
+            top: 0mm; /* Alineado al inicio del contenido, dentro del margen de 2.5cm */
+            right: 0mm;
+            width: 30mm;
+            height: 30mm;
+            border: 1px solid #eee;
+            padding: 3px;
+            background: white;
+            z-index: 1000;
+            text-align: center;
+        }
+        .qr-container img { width: 100%; height: auto; display: block; }
+        .qr-label { font-size: 7pt; text-align: center; display: block; margin-top: 3px; color: #666; font-weight: normal; }
+
+        /* SECCIONES DE TEXTO */
+        .section { margin-bottom: 25px; }
+        .section-title {
+            font-weight: bold;
+            text-transform: uppercase;
+            border-left: 4px solid #0056b3;
+            padding-left: 10px;
+            margin-bottom: 10px;
+            color: #222;
+            font-size: 12pt;
+        }
+        .content { text-align: justify; margin-bottom: 10px; }
+        
+        /* LISTA DE LEYES (FIX CRÍTICO: ORDEN DE LEYES) */
+        .law-list { list-style-type: none; padding: 0; }
+        .law-list li {
+            background: #f9f9f9;
+            padding: 8px;
+            margin-bottom: 8px;
+            border-left: 3px solid #ccc;
+            font-size: 10pt;
+        }
+        .law-cite { font-weight: bold; color: #0056b3; display: block; }
+
+        /* TABLAS DE DATOS */
+        .data-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        .data-table td { padding: 5px; vertical-align: top; border-bottom: 1px solid #eee; }
+        .label { font-weight: bold; width: 30%; color: #555; }
+        .value { width: 70%; }
+
+        /* FIRMAS */
+        .signature { margin-top: 50px; text-align: center; }
+        .signature-line { border-top: 1px solid #000; width: 250px; margin: 0 auto 10px auto; }
+        .signature-name { font-weight: bold; margin: 0; text-transform: uppercase; }
+        .signature-role { font-size: 9pt; color: #666; margin: 0; }
+
+        /* FOOTER */
+        .footer { position: fixed; bottom: 0; width: 100%; text-align: center; font-size: 8pt; color: #999; border-top: 1px solid #eee; padding-top: 5px; }
+        .hash-tag { font-family: 'Courier New', Courier, monospace; font-size: 7pt; }
+        
+        .highlight { background: #fff8e1; border: 1px solid #ffe082; padding: 10px; border-radius: 4px; font-style: italic; }
+    </style>
+</head>
+<body>
+    <!-- QR CODE -->
+    {% if qr_code_base64 %}
+    <div class="qr-container">
+        <img src="data:image/png;base64,{{ qr_code_base64 }}" alt="QR de Verificación">
+        <span class="qr-label">Verificar Integridad</span>
+    </div>
+    {% endif %}
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <div class="main-content">
+        {% block content %}{% endblock %}
+    </div>
+
+    <div class="footer">
+        <p>Documento generado por Orbital Prime Engine V64.2 - Alcaldía de Santiago de Cali</p>
+        <p class="hash-tag">Certificación de Integridad: {{ hash | default('SHA-256 Verified by Ledger') }}</p>
+    </div>
+</body>
+</html>

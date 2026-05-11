@@ -1,12 +1,5 @@
 {% extends "base_layout.j2" %}
 
-{% if not justificacion_traslado or "funcionario incompetente" in justificacion_traslado.lower() %}
-  {% set justificacion_traslado = "La solicitud fue recibida por esta dependencia pero, tras análisis de competencia, se determina que la entidad idónea para resolver es " ~ pdf_dependency ~ ", por lo que se procede al traslado conforme al Artículo 21 de la Ley 1437 de 2011." %}
-{% endif %}
-{% if not resumen_solicitud or resumen_solicitud == " " %}
-  {% set resumen_solicitud = asunto | default("Solicitud de trámite ciudadano") %}
-{% endif %}
-
 {% block content %}
     <div class="header">
         <h1>ALCALDÍA DE SANTIAGO DE CALI</h1>
@@ -18,11 +11,11 @@
         <table class="data-table">
             <tr>
                 <td class="label">Para:</td>
-                <td class="value"><strong>{{ pdf_to_dependency | upper if pdf_to_dependency else dependencia_competente | upper }}</strong></td>
+                <td class="value">{{ entidad_destino | upper }}</td>
             </tr>
             <tr>
                 <td class="label">De:</td>
-                <td class="value">{{ pdf_from_dependency | default('Secretaría General') }}</td>
+                <td class="value">Secretaría General</td>
             </tr>
             <tr>
                 <td class="label">Fecha:</td>
@@ -35,30 +28,26 @@
         </table>
     </div>
 
-    <!-- I. JUSTIFICACIÓN -->
     <div class="section">
         <div class="section-title">I. JUSTIFICACIÓN DEL TRASLADO</div>
         <div class="content">
-            <p>{{ soporte_traslado | default("Se remite por competencia técnica según lo establecido en el Artículo 21 de la Ley 1437 de 2011 (Sustituido por Ley 1755 de 2015).") }}</p>
+            <p>Se remite por competencia técnica según lo establecido en el Artículo 21 de la Ley 1437 de 2011 (Sustituido por Ley 1755 de 2015).</p>
         </div>
     </div>
 
-    <!-- II. RESUMEN SOLICITUD -->
     <div class="section">
         <div class="section-title">II. RESUMEN DE LA SOLICITUD</div>
         <div class="content">
-            <div class="highlight">
-                "{{ motivo | default('Trámite PQRSD en proceso de traslado.') }}"
-            </div>
+            <p class="highlight">" {{ resumen_solicitud }} "</p>
         </div>
     </div>
 
-    <!-- III. FUNDAMENTO JURÍDICO -->
     <div class="section">
         <div class="section-title">III. FUNDAMENTO JURÍDICO</div>
         <div class="content">
-            <div class="law-cite">Ley 1437 de 2011 - Art. 21 (Sustituido por Ley 1755 de 2015):</div>
-            <p>"Funcionario incompetente. Si la autoridad a quien se dirige la petición no es la competente, deberá informarlo de inmediato al interesado... y remitir a la entidad correspondiente."</p>
+            <p>De conformidad con el Artículo 21 de la Ley 1437 de 2011 (Código de Procedimiento Administrativo y de lo Contencioso Administrativo), modificado por la Ley 1755 de 2015, esta dependencia procede al traslado de la presente solicitud por no ser competente para resolverla de fondo.</p>
+            
+            <p>En este caso, la solicitud presentada por <strong>{{ nombre_peticionario }}</strong> ({{ identificacion }}), requiere análisis técnico especializado en materia de <strong>{{ entidad_destino }}</strong>, por lo que se remite a dicha dependencia para su estudio y respuesta de fondo, garantizando el derecho de petición del ciudadano.</p>
         </div>
     </div>
 
