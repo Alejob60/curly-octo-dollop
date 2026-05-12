@@ -242,7 +242,25 @@ class PQRSManager:
                     data={"needs_review": True, "score": audit["score"]}
                 )
                 logger.critical(f"🚨 [FLOW_ALERT] Sesión {session_id} marcada para revisión humana (Score: {audit['score']})")
-                # No retornamos aquí, guardamos el estado pero el generador de PDF bloqueará
+                
+                # 📥 PERSISTENCIA PARA REVISIÓN HUMANA (Diamond V65.14)
+                db = mongo_manager.get_db()
+                if db is not None:
+                    await db["pqrs_human_review"].update_one(
+                        {"session_id": session_id},
+                        {"$set": {
+                            "radicado": state_data.get("radicado", "GEN"),
+                            "asunto": parsed.get("asunto", "Solicitud sin asunto"),
+                            "confidence": audit["score"],
+                            "reason": audit["reason"],
+                            "hechos_extraidos": parsed.get("hechos_extraidos"),
+                            "borrador_proyeccion": parsed.get("borrador_proyeccion"),
+                            "status": "PENDING",
+                            "created_at": time.time(),
+                            "payload_snapshot": state_data
+                        }},
+                        upsert=True
+                    )
             
             await orchestrator.emit_event(
                 session_id, Phase.F3_ANALISIS, "✅ Finalizando análisis legal...", 85
@@ -285,12 +303,34 @@ class PQRSManager:
         return {"type": "card", "cardType": "EvidenceAndLegalCard", "data": data}
 
     async def finalize_pqrs(self, session_id: str) -> dict:
-        """FASE 3: Cierre Determinista Síncrono"""
+        """FASE 3: Cierre Determinista Síncrono con Wait Protocol V65.14"""
         start_time = time.time()
         state_key = f"{self.state_prefix}{session_id}"
-        raw = await redis_client.hgetall(state_key)
-        if not raw: raise ValueError("Sesión no encontrada")
         
+        # --- ⏳ [WAIT_PROTOCOL V65.14] ---
+        # Si el usuario finaliza muy rápido, esperamos a que la IA termine el análisis de fondo.
+        max_wait = 20
+        for _ in range(max_wait):
+            raw = await redis_client.hgetall(state_key)
+            if not raw: raise ValueError("Sesión no encontrada")
+            
+            # Decodificar estado
+            current_state = { (k.decode() if isinstance(k, bytes) else k): (v.decode() if isinstance(v, bytes) else v) for k, v in raw.items() }
+            
+            # Verificar si la IA ya terminó (confidence > 0)
+            confidence = float(current_state.get("confidence", 0.0))
+            if confidence >= 0.85:
+                logger.info(f"✅ [WAIT_PROTOCOL] IA lista para {session_id} (Score: {confidence})")
+                break
+                
+            if _ % 2 == 0:
+                logger.info(f"⏳ [WAIT_PROTOCOL] Esperando análisis IA para {session_id}...")
+            await asyncio.sleep(1)
+        else:
+            logger.error(f"❌ [WAIT_PROTOCOL] Timeout esperando análisis IA para {session_id}")
+
+        # Recuperar estado final
+        raw = await redis_client.hgetall(state_key)
         state = { (k.decode() if isinstance(k, bytes) else k): (v.decode() if isinstance(v, bytes) else v) for k, v in raw.items() }
         
         # 🔍 LOG STATE RECOVERY
