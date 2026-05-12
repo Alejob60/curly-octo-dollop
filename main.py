@@ -58,11 +58,11 @@ async def startup_event():
     except Exception as e:
         logger.error(f"⚠️ Error inicializando RAG: {e}")
 
-    # --- ⚙️ MÓDULO: PROCESADOR DE COLA BATCH (V65.13) ---
+    # --- ⚙️ MÓDULO: PROCESADOR DE COLA BATCH (V65.14) ---
     try:
         from app.services.queue_processor import process_pending_queue_loop
         asyncio.create_task(process_pending_queue_loop())
-        logger.info("⚙️ [V65.13] Worker de Cola Batch activado.")
+        logger.info("⚙️ [V65.14] Worker de Cola Batch activado.")
     except Exception as e:
         logger.error(f"❌ Fallo al iniciar Worker de Cola: {e}")
 

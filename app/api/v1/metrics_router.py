@@ -2,6 +2,7 @@ from fastapi import APIRouter
 from app.core.db_clients import mongo_manager, redis_client
 from loguru import logger
 import time
+from datetime import datetime
 
 router = APIRouter(prefix="/api/v1/metrics", tags=["Monitoring & Analytics"])
 
@@ -56,3 +57,24 @@ async def get_pipeline_metrics():
     except Exception as e:
         logger.error(f"❌ Error recuperando métricas: {e}")
         return {"status": "error", "message": str(e)}
+
+@router.get("/pipeline/reviews")
+async def get_human_reviews():
+    """
+    💎 [V65.14] Recupera casos bloqueados por el Guardián.
+    """
+    try:
+        db = mongo_manager.get_db()
+        # Buscamos en la colección de revisión humana
+        cursor = db["pqrs_human_review"].find({"status": "PENDING"}).sort("created_at", -1)
+        items = await cursor.to_list(50)
+        
+        for item in items:
+            item["_id"] = str(item["_id"])
+            if "created_at" in item and isinstance(item["created_at"], float):
+                item["created_at"] = datetime.fromtimestamp(item["created_at"]).isoformat()
+
+        return {"items": items}
+    except Exception as e:
+        logger.error(f"❌ Error en bandeja de revisión: {e}")
+        return {"items": []}
