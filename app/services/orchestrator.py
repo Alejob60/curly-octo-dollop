@@ -50,10 +50,10 @@ class MasterOrchestrator:
         # Log estructurado
         logger.info(f"📡 [EVENT_EMIT] {json.dumps(event_payload)}")
 
-    async def execute_task_with_semaphore(self, task_func, *args, **kwargs):
-        """Ejecuta una tarea de IA bajo el control del semáforo"""
+    async def execute_task_with_semaphore(self, coro):
+        """Ejecuta una corrutina de IA bajo el control del semáforo."""
         async with self.ai_semaphore:
-            return await task_func(*args, **kwargs)
+            return await coro
 
     async def run_shielded_analysis(self, session_id: str, original_prompt: str, ai_logic_func):
         """
@@ -68,19 +68,30 @@ class MasterOrchestrator:
 
         for attempt in range(max_retries + 1):
             try:
-                # 1. Llamada a la IA (esto ya tiene retries internos en vertex_client)
-                ai_data = await self.execute_task_with_semaphore(ai_logic_func)
+                logger.info(f"📤 [AI_SHIELD] Intento {attempt+1}/{max_retries+1} para {session_id}")
+                
+                # 1. Llamada a la IA
+                ai_raw = await self.execute_task_with_semaphore(ai_logic_func)
+                
+                # Parsear si viene como string (V65.14)
+                ai_data = ai_raw
+                if isinstance(ai_raw, str):
+                    try:
+                        ai_data = json.loads(ai_raw)
+                    except:
+                        import json_repair
+                        ai_data = json_repair.loads(ai_raw)
                 
                 # 2. Auditoría de Confianza
                 audit = await confidence_auditor.evaluate(original_prompt, ai_data)
                 
                 if audit["passed"]:
-                    return ai_data, audit
+                    return ai_raw, audit
                 
-                last_ai_data = ai_data
+                last_ai_data = ai_raw
                 last_audit = audit
                 
-                logger.warning(f"⚠️ [LOW_CONFIDENCE] Intento {attempt+1} fallido (Score: {audit['score']:.2f}).")
+                logger.warning(f"⚠️ [LOW_CONFIDENCE] Intento {attempt+1} fallido (Score: {audit['score']:.2f}). Motivo: {audit.get('reason')}")
                 if attempt < max_retries:
                     wait = 2 ** attempt
                     logger.info(f"🔄 Reintentando en {wait}s...")

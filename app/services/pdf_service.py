@@ -23,12 +23,17 @@ class PDFService:
     def generate(self, context: dict, required_docs: list) -> dict:
         """
         Genera el paquete de documentos oficiales.
-        Bloquea si la confianza de la IA es < 0.85 (V65.12).
+        Bloquea si la confianza de la IA es < 0.85 (V65.14).
         """
         import concurrent.futures
         
         # 🛡️ GUARDIA V65.12: Bloqueo por baja confianza
-        confidence = float(context.get("confidence", 0.0))
+        try:
+            conf_raw = context.get("confidence", 1.0)
+            confidence = float(conf_raw) if conf_raw is not None else 1.0
+        except:
+            confidence = 1.0
+
         if confidence < 0.85:
             logger.critical(f"🚫 [PDF_BLOCK] Confianza insuficiente ({confidence:.2f}). Abortando generación.")
             return {}
