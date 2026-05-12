@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useI18n } from "../i18n";
 import { BarChart3, TrendingUp, ShieldAlert, Zap, Globe, MapPin, Smile, Frown, Meh, ArrowUpRight, Clock, ShieldCheck, Activity, ChevronRight, BadgeCheck } from "lucide-react";
+import { DiamondPipelineMonitor } from "./dashboard/DiamondPipelineMonitor";
 
 export function StrategicDashboard() {
   const { t } = useI18n();
@@ -67,6 +68,9 @@ export function StrategicDashboard() {
           </div>
         ))}
       </div>
+
+      {/* 🚀 DIAMOND PIPELINE MONITOR (V65.14) */}
+      <DiamondPipelineMonitor />
 
       {/* RASTREADOR MULTIDEPENDENCIA V20 */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">

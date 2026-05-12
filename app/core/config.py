@@ -50,7 +50,7 @@ class Settings(BaseSettings):
     AI_EMBEDDING_DIMENSIONS: int = int(os.getenv("AI_EMBEDDING_DIMENSIONS", "768"))
     AI_USE_MOCKS: bool = os.getenv("AI_USE_MOCKS", "false").lower() == "true"
     STRICT_MODE: bool = True # Forzar validación Pydantic estricta (Módulo 2)
-    APP_VERSION: str = os.getenv("APP_VERSION", "V65.12")
+    APP_VERSION: str = os.getenv("APP_VERSION", "V65.14")
     MIN_CONFIDENCE_THRESHOLD: float = float(os.getenv("MIN_CONFIDENCE_THRESHOLD", "0.85"))
     MAX_AI_RETRIES: int = int(os.getenv("MAX_AI_RETRIES", "2"))
 
