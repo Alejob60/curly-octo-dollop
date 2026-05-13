@@ -3,6 +3,7 @@ from app.services.legal_agents.extractor import FactExtractorAgent
 from app.services.legal_agents.researcher import LegalResearcherAgent
 from app.services.legal_agents.crafter import DocumentCrafterAgent
 from app.services.legal_agents.reviewer import ComplianceReviewerAgent
+from app.services.legal_agents.calilex import CalilexAgent
 from app.services.persistence_bridge import persistence_bridge
 from loguru import logger
 import asyncio
@@ -10,7 +11,7 @@ import json
 
 class LegalOrchestrator:
     """
-    Cerebro Multiagente V1.0.
+    Cerebro Multiagente V1.0 - Integración Cali-Lex Advisor V65.6.
     Coordina agentes especializados para el escalado legal de Orbital Prime.
     """
     def __init__(self):
@@ -18,7 +19,8 @@ class LegalOrchestrator:
             "extractor": FactExtractorAgent(),
             "researcher": LegalResearcherAgent(),
             "crafter": DocumentCrafterAgent(),
-            "reviewer": ComplianceReviewerAgent()
+            "reviewer": ComplianceReviewerAgent(),
+            "calilex": CalilexAgent()  # ⚖️ Nuevo agente de auditoría forense
         }
     
     async def process(self, session_id: str, raw_input: str, case_type: str = "pqrs", extra_prompt: str = None) -> LegalCaseState:
@@ -99,6 +101,30 @@ class LegalOrchestrator:
             else:
                 logger.warning(f"⚠️ [ORCHESTRATOR] Calidad insuficiente ({state.review_score}). Re-generando con feedback...")
 
+        # FASE 5: Auditoría Forense Cali-Lex Advisor V65.6 (POST-PROCESAMIENTO)
+        logger.info("⚖️ [CALILEX_PHASE] Iniciando auditoría forense post-procesamiento...")
+        try:
+            calilex_agent = self.agents["calilex"]
+            calilex_audit = await calilex_agent.analyze_case_quality(state)
+            
+            # Inyectar resultados de Calilex en el estado
+            state.confidence_score = calilex_audit.get("confidence_score", 0.0)
+            state.grounding_score = calilex_audit.get("grounding_score", 0.0)
+            state.completeness_score = calilex_audit.get("completeness_score", 0.0)
+            state.complexity_level = calilex_audit.get("complexity_level", "MEDIUM")
+            state.integrity_hash = calilex_audit.get("integrity_hash", "")
+            state.calilex_version = calilex_audit.get("version_engine", "V65.6")
+            state.pdf_blocked = calilex_audit.get("pdf_blocked", False)
+            state.calilex_block_reason = calilex_audit.get("block_reason")
+            state.fecha_alert = calilex_audit.get("fecha_alert")
+            state.human_review_required = calilex_audit.get("human_review_required", False)
+            
+            logger.info(f"✅ [CALILEX_AUDIT_COMPLETE] Confidence: {state.confidence_score:.3f} | Blocked: {state.pdf_blocked}")
+        except Exception as e:
+            logger.error(f"❌ [CALILEX_PHASE_ERROR] {e}")
+            # No bloquear el flujo, pero marcar para revisión humana
+            state.human_review_required = True
+
         # Sincronizar con el puente de persistencia
         await self._persist_state(state)
         return state
@@ -123,12 +149,25 @@ class LegalOrchestrator:
     
     async def _persist_state(self, state: LegalCaseState):
         radicado = f"LEGAL-{state.session_id[-4:].upper()}"
-        await persistence_bridge.save_progress(state.session_id, radicado, {
+        
+        # Preparar datos para persistencia incluyendo métricas Calilex
+        persistence_data = {
             "tipo_solicitud": state.case_type.upper(),
             "estado": "REVISADO" if state.review_status == "approved" else "BORRADOR",
             "hechos_extraidos": "\n".join(state.facts),
             "borrador_proyeccion": state.draft_document,
-            "review_score": getattr(state, "review_score", 0.5)
-        })
+            "review_score": getattr(state, "review_score", 0.5),
+            # Métricas Calilex V65.6 para analítica PQRS
+            "confidence_score": getattr(state, "confidence_score", 0.0),
+            "grounding_score": getattr(state, "grounding_score", 0.0),
+            "completeness_score": getattr(state, "completeness_score", 0.0),
+            "complexity_level": getattr(state, "complexity_level", "MEDIUM"),
+            "integrity_hash": getattr(state, "integrity_hash", ""),
+            "calilex_version": getattr(state, "calilex_version", "V65.6"),
+            "pdf_blocked": getattr(state, "pdf_blocked", False),
+            "human_review_required": getattr(state, "human_review_required", False)
+        }
+        
+        await persistence_bridge.save_progress(state.session_id, radicado, persistence_data)
 
 legal_orchestrator = LegalOrchestrator()
