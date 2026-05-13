@@ -34,13 +34,22 @@ class Settings(BaseSettings):
     MONGO_URL: str = os.getenv("MONGODB_ATLAS_URI", "mongodb://localhost:27017")
     MONGO_DB: str = os.getenv("MONGODB_ATLAS_DB", "orbital_prime_atlas")
     
-    # === 🧠 INTELIGENCIA GCP (Vertex AI) ===
+    # === 🧠 INTELIGENCIA GCP (Vertex AI & Cali-Lex) ===
     GCP_PROJECT_ID: str = os.getenv("GCP_PROJECT_ID", "misybot-ai-beta")
     GCP_LOCATION: str = os.getenv("GCP_LOCATION", "us-central1")
+    
+    # Cali-Lex Advisor (V65.5 Compliance)
+    CALI_LEX_ENGINE_ID: str = os.getenv("CALI_LEX_ENGINE_ID", "2046231271465549824")
+    CALI_LEX_PROJECT_ID: str = os.getenv("CALI_LEX_PROJECT_ID", "misybot-ai-beta")
+    CALI_LEX_LOCATION: str = os.getenv("CALI_LEX_LOCATION", "us-central1")
+    CALI_LEX_URL: str = f"https://{CALI_LEX_LOCATION}-aiplatform.googleapis.com/v1/projects/{CALI_LEX_PROJECT_ID}/locations/{CALI_LEX_LOCATION}/reasoningEngines/{CALI_LEX_ENGINE_ID}:streamQuery"
+    CALI_LEX_USE_MOCK: bool = os.getenv("CALI_LEX_USE_MOCK", "false").lower() == "true"
+
+    # Vertex / AI Studio Keys
     VERTEX_MODEL_NAME: str = os.getenv("VERTEX_MODEL_NAME", "gemini-2.5-flash")
-    VERTEX_API_KEY: Optional[str] = os.getenv("VERTEX_API_KEY")
     GOOGLE_API_KEY: Optional[str] = os.getenv("GOOGLE_API_KEY")
     GEMINI_API_KEY: Optional[str] = os.getenv("GEMINI_API_KEY")
+    VERTEX_API_KEY: Optional[str] = os.getenv("VERTEX_API_KEY")
     NVIDIA_NIMS_API_KEY: Optional[str] = os.getenv("NVIDIA_NIMS_API_KEY")
 
     # Unified AI Interface

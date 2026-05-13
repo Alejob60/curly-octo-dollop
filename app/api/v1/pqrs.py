@@ -57,13 +57,16 @@ async def analyze_pqrs(
 
 @router.post("/update-slot")
 async def update_pqrs_slot(request: SlotUpdateRequest):
-    """V65.0: Sincronización de datos"""
+    """💎 [V65.14] Sincronización de datos con Deep Logging"""
     try:
         session_id = request.session_id
         state_key = f"{STATE_PREFIX}{session_id}"
         
         slots = request.slots or {}
         if slots:
+            # 🔍 LOG SLOTS RECEIVED
+            logger.debug(f"📥 [SLOTS_RECV] session={session_id} | data={json.dumps(slots)}")
+            
             mapping = {k: (json.dumps(v) if isinstance(v, (list, dict)) else str(v)) for k, v in slots.items() if v is not None}
             if mapping:
                 await redis_client.hset(state_key, mapping=mapping)
@@ -75,22 +78,35 @@ async def update_pqrs_slot(request: SlotUpdateRequest):
             "phase": "fase_2_triaje",
             "service": "pqrs_manager",
             "action": "update_slot",
+            "payload_json": slots, # 🔍 FULL JSON IN LOG
             "persistence": {"redis_updated": True, "fields_synced": len(slots)}
         }
-        logger.info(f"👁️ [PHASE_2_UPDATE_LOG] {json.dumps(log_entry)}")
+        logger.info(f"👁️ [PHASE_2_UPDATE_LOG] {json.dumps(log_entry, indent=2)}")
 
-        is_confirmed_final = str(slots.get("confirmado")).lower() in ["true", "1", "yes", "t"]
+        # 🛡️ CHECK FINAL CONFIRMATION (Resilient Boolean)
+        conf_raw = slots.get("confirmado") or slots.get("confirmed")
+        is_confirmed_final = str(conf_raw).lower() in ["true", "1", "yes", "t", "confirmado"]
         
         if is_confirmed_final:
-             logger.success(f"🚀 [AUTO_FINALIZE] Finalizando para {session_id}")
+             logger.success(f"🚀 [AUTO_FINALIZE_TRIGGER] session={session_id}")
              try:
                 result = await pqrs_manager.finalize_pqrs(session_id)
+                logger.info(f"🏁 [FINALIZE_RESULT] session={session_id} | data={json.dumps(result, indent=2)}")
                 return {"type": "card", "cardType": "SuccessCard", "data": result}
              except Exception as e:
                 logger.error(f"🔥 [CRITICAL_FINALIZE] {e}")
+                import traceback
+                logger.error(traceback.format_exc())
                 raise HTTPException(status_code=500, detail=str(e))
 
-        return await pqrs_manager.get_next_ui_instruction(session_id)
+        # Recuperar estado actual para decidir siguiente instrucción
+        raw_state = await redis_client.hgetall(state_key)
+        state_data = {k.decode() if isinstance(k, bytes) else k: v.decode() if isinstance(v, bytes) else v for k, v in raw_state.items()}
+        
+        instruction = await pqrs_manager.get_next_ui_instruction(session_id, state_data)
+        logger.debug(f"📤 [NEXT_UI_INS] session={session_id} | card={instruction.get('cardType')}")
+        
+        return instruction
     except Exception as e:
         logger.error(f"🔥 [API_ERROR] {e}")
         raise HTTPException(status_code=500, detail=str(e))

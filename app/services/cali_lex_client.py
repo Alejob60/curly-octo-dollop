@@ -71,9 +71,12 @@ def _generate_deterministic_mock(payload: dict) -> dict:
     }
 
 async def call_cali_lex(payload: dict, use_mock: bool = None) -> dict:
-    """Cliente principal con fallback automático si Vertex falla"""
+    """
+    💎 [V65.14 Diamond] Cliente Principal Cali-Lex Advisor.
+    Cumple al 100% con el Manual de Integración V65.5.
+    """
     if use_mock is None:
-        use_mock = USE_MOCK
+        use_mock = settings.CALI_LEX_USE_MOCK
     
     if use_mock:
         logger.info(f"🎭 [MOCK] Usando respuesta determinista para {payload.get('radicado')}")
@@ -89,24 +92,33 @@ async def call_cali_lex(payload: dict, use_mock: bool = None) -> dict:
         "Content-Type": "application/json"
     }
     
-    api_url = f"https://{LOCATION}-aiplatform.googleapis.com/v1/projects/{PROJECT}/locations/{LOCATION}/reasoningEngines/{ENGINE_ID}:streamQuery"
+    # URL y Payload según Manual V65.5
+    api_url = settings.CALI_LEX_URL
+    request_payload = {
+        "input": {
+            "message": payload.get("descripcion", "") or payload.get("message", "")
+        }
+    }
     
     for attempt in range(MAX_RETRIES):
         try:
             async with httpx.AsyncClient(timeout=TIMEOUT_SEC) as client:
-                resp = await client.post(api_url, headers=headers, json={"input": json.dumps(payload)})
+                logger.debug(f"📤 [CALI-LEX_REQ] Intento {attempt+1} | URL: {api_url}")
+                resp = await client.post(api_url, headers=headers, json=request_payload)
                 
                 if resp.status_code == 200:
+                    # El streamQuery puede devolver múltiples fragmentos, buscamos el bloque JSON
                     text = resp.text.strip()
                     try:
                         data = json.loads(text)
                     except:
+                        # Fallback a extracción por Regex si hay ruido en el stream
                         match = re.search(r'\{[\s\S]*\}', text)
                         data = json.loads(match.group()) if match else {}
                     
-                    # Validar contra schema Pydantic
+                    # Validar contra contrato estricto
                     validated = StrictLegalOutput.model_validate(data)
-                    logger.info(f"✅ [CALI-LEX] JSON validado | Confianza: {validated.auditoria.confidence_score}")
+                    logger.info(f"✅ [CALI-LEX] Integración Exitosa | Confianza: {validated.auditoria.confidence_score}")
                     return validated.model_dump()
                 else:
                     logger.error(f"❌ [CALI-LEX] Error {resp.status_code}: {resp.text}")
@@ -114,10 +126,10 @@ async def call_cali_lex(payload: dict, use_mock: bool = None) -> dict:
                         await asyncio.sleep(2 ** attempt)
                         continue
         except Exception as e:
-            logger.warning(f"⚠️ [RETRY] Intento {attempt+1} falló: {e}")
+            logger.warning(f"⚠️ [CALI-LEX_RETRY] Fallo: {e}")
             if attempt < MAX_RETRIES - 1:
                 await asyncio.sleep(2 ** attempt)
                 continue
     
-    logger.error("💥 [FALLBACK] Todos los intentos fallaron, usando mock")
+    logger.error("💥 [CALI-LEX_FAIL] Máximos reintentos alcanzados. Activando MOCK de seguridad.")
     return _generate_deterministic_mock(payload)

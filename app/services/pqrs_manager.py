@@ -142,12 +142,19 @@ class PQRSManager:
             state_data = {k.decode() if isinstance(k, bytes) else k: v.decode() if isinstance(v, bytes) else v for k, v in raw_state.items()}
 
             payload = {**state_data, "descripcion": message, "contexto_legal": legal_grounding}
+            
+            # 🔍 LOG REQUEST PAYLOAD
+            logger.info(f"📤 [CALI-LEX_REQ] session={session_id} | payload={json.dumps(payload, indent=2, ensure_ascii=False)}")
 
             # 1. Llamada a Cali-Lex (await directo del coroutine)
             ai_resp_dict = await orchestrator.execute_task_with_semaphore(call_cali_lex(payload))
             
+            # 🔍 LOG RAW IA RESPONSE
+            logger.info(f"🤖 [CALI-LEX_RESP] session={session_id} | data={json.dumps(ai_resp_dict, indent=2, ensure_ascii=False)}")
+
             # 2. Auditoría
             decision = await agent_health_guard.decide_route(payload, ai_resp_dict)
+            logger.info(f"🔍 [AUDIT_DECISION] session={session_id} | decision={decision.decision} | score={decision.confidence}")
             
             if decision.decision == "BLOCK_AND_REVIEW":
                 logger.critical(f"🚨 [FLOW_BLOCK] Baja confianza para {session_id}")
