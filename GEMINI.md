@@ -25,3 +25,10 @@
 ## 📂 Estructura de Documentación
 - `PRODUCT_DOCUMENTATION/`: Informes técnicos y manuales operativos.
 - `PLAN_MAESTRO.md`: Registro de tareas y estado actual del Sprint.
+
+## 🌳 Workflow de Git (Gitflow)
+- **`main`**: Código estable en producción. Solo recibe merges de `develop` (vía releases) o `hotfix`.
+- **`develop`**: Rama principal de integración. Todo desarrollo nuevo nace aquí.
+- **Features**: `feature/nombre-tarea` nacen de `develop` y vuelven a `develop`.
+- **Hotfixes**: `hotfix/descripcion` nacen de `main` y vuelven a `main` y `develop`.
+- **PROHIBIDO**: Commitear directamente a `main` sin pasar por el flujo de validación.
