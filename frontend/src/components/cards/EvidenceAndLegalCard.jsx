@@ -6,21 +6,24 @@ export const EvidenceAndLegalCard = ({ data, onConfirm, isProcessing }) => {
   const [authorized, setAuthorized] = useState(false);
   const fileInputRef = useRef(null);
 
+  // 🛡️ [V65.14] Lógica de Disponibilidad de Cierre
+  const analysisReady = data.analysis_ready || data.progress >= 99;
+  const progress = data.progress || 0;
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!authorized) {
-      return;
-    }
-    // 🔧 FIX 4: Payload limpio (PR #01)
+    if (!authorized || !analysisReady) return;
+    
     onConfirm({ 
         autorizacion_datos: true,
-        confirmed: true, // Clave estándar frontend
-        confirmado: "true" // Clave estándar backend (redundancia segura)
+        confirmed: true,
+        confirmado: "true"
     });
   };
 
   return (
     <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-lg w-full animate-in zoom-in-95 duration-500 text-slate-900 overflow-hidden">
+      {/* ... (header section) */}
       <div className="flex items-center gap-2 mb-4 border-b border-slate-50 pb-3">
         <div className="p-1 bg-indigo-600 rounded shadow-sm">
           <UploadCloud className="w-4 h-4 text-white" />
@@ -32,6 +35,22 @@ export const EvidenceAndLegalCard = ({ data, onConfirm, isProcessing }) => {
       </div>
 
       <div className="space-y-5">
+        {/* 📊 INDICADOR DE PROGRESO IA (V65.14) */}
+        {!analysisReady && (
+            <div className="bg-indigo-50/50 rounded-xl p-4 border border-indigo-100/50 animate-pulse">
+                <div className="flex items-center justify-between mb-2">
+                    <span className="text-[8px] font-black text-indigo-600 uppercase tracking-widest flex items-center gap-1.5">
+                        <Loader2 className="w-3 h-3 animate-spin" /> {data.message || 'Analizando solicitud...'}
+                    </span>
+                    <span className="text-[9px] font-bold text-indigo-400">{progress}%</span>
+                </div>
+                <div className="h-1.5 bg-indigo-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-indigo-600 transition-all duration-500" style={{ width: `${progress}%` }}></div>
+                </div>
+                <p className="text-[7px] text-slate-400 mt-2 font-medium italic text-center">El Magistrado está fundamentando legalmente su radicado...</p>
+            </div>
+        )}
+
         {/* Resumen del Asunto (Solo Lectura) */}
         <div className="bg-slate-50 border border-slate-100 rounded-lg p-3">
           <div className="flex items-center gap-2 mb-1.5">

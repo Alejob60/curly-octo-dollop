@@ -1,0 +1,52 @@
+{# Plantilla V61.3 - Oficio de Logística Interna #}
+
+<div class="header">
+    <h1>ALCALDÍA DE SANTIAGO DE CALI</h1>
+    <div class="subheader">OFICIO INTERNO DE LOGÍSTICA Y RECURSOS</div>
+    <div class="radicado">OF-LOG-{{ radicado }}</div>
+</div>
+
+{# Sello QR de Verificación #}
+{% if qr_code_base64 %}
+<div class="qr-container">
+    <img src="data:image/png;base64,{{ qr_code_base64 }}" alt="QR de Verificación">
+    <div class="label">Validación Logística</div>
+</div>
+{% endif %}
+
+<div class="section-content mt-20">
+    <p><strong>PARA:</strong> Oficina de Logística / Servicios Generales</p>
+    <p><strong>DE:</strong> {{ dependencia_competente | default('Secretaría General') }}</p>
+    <p><strong>ASUNTO:</strong> Solicitud de recursos para Capacitación Radicado No. {{ radicado }}</p>
+    <p><strong>FECHA:</strong> {{ fecha_generacion }}</p>
+</div>
+
+<div class="section-title">I. REQUERIMIENTOS TÉCNICOS</div>
+<div class="section-content">
+    Con el fin de dar cumplimiento a la programación de la capacitación para la comunidad de <strong>{{ nombre_entidad | default('Junta de Acción Comunal') }}</strong>, se solicitan amablemente los siguientes recursos para la fecha <strong>{{ fecha_confirmada | default('24/10/2025') }}</strong>:
+</div>
+
+<div class="highlight">
+    <ul style="list-style-type: none; padding-left: 10px;">
+        <li style="margin-bottom: 8px;">✅ <strong>Infraestructura:</strong> Auditorio o Salón con capacidad para {{ cupos_disponibles | default('50') }} personas.</li>
+        <li style="margin-bottom: 8px;">✅ <strong>Equipos:</strong> Video Beam, sistema de sonido y conectividad a internet.</li>
+        <li style="margin-bottom: 8px;">✅ <strong>Bienestar:</strong> Refrigerios para {{ cupos_disponibles | default('50') }} personas según estándares nutricionales.</li>
+        <li style="margin-bottom: 8px;">✅ <strong>Certificación:</strong> Impresión y papelería para {{ cupos_disponibles | default('50') }} certificados de asistencia.</li>
+    </ul>
+</div>
+
+<div class="section-title">II. COORDINACIÓN</div>
+<div class="section-content">
+    El instructor asignado para esta jornada es <strong>{{ nombre_instructor | default('Equipo Técnico') }}</strong>. Se solicita coordinar el acceso al recinto una hora antes del inicio programado ({{ hora_confirmada | default('14:00') }}).
+</div>
+
+<div class="signature">
+    <div class="signature-line"></div>
+    <p class="signature-name">COORDINADOR DE PROGRAMA / SECRETARIO</p>
+    <p class="signature-role">{{ dependencia_competente | default('Alcaldía de Cali') }}</p>
+</div>
+
+<div class="footer">
+    <p>Este requerimiento es generado por el módulo de gestión de recursos de <strong>Orbital Prime</strong></p>
+    <p class="hash-tag">Sello de Auditoría: {{ hash | default('SHA-256 Verified') }}</p>
+</div>

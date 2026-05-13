@@ -55,19 +55,14 @@ export const CaliLexPrime = () => {
     }
   }, [hasConsent]);
 
-  // 🔥 POLLING DE PROGRESO (Fix de Bloqueo Final)
+  // 🔥 POLLING DE PROGRESO (V65.14)
   useEffect(() => {
-    if (isProcessing) {
-      console.log("📡 [POLLING_ACTIVE] session:", sessionId);
-      
-      pollingRef.current = setInterval(async () => {
+    const poll = async () => {
         try {
           const response = await fetch(`${API_BASE}/progress/${sessionId}`);
           const data = await response.json();
-          console.log("📊 [POLLING_DATA]", data);
           
           if (data.status === 'complete') {
-            console.log("✅ [POLLING_SUCCESS]");
             clearInterval(pollingRef.current);
             setIsProcessing(false);
             if (data.data) renderFinalSuccess(data.data);
@@ -75,14 +70,28 @@ export const CaliLexPrime = () => {
             clearInterval(pollingRef.current);
             setIsProcessing(false);
             addLog(`ERROR: ${data.message}`, "error");
-          } else if (data.progress !== undefined) {
-            setProcessingStatus(data.message || "Procesando documentos...");
+          } else {
+            // Sincronizar datos de fondo con el último mensaje de tipo card
+            if (data.analysis_ready || data.progress !== undefined) {
+                setMessages(prev => {
+                    const last = prev[prev.length - 1];
+                    if (last && last.type === 'card') {
+                        const updated = { ...last, data: { ...last.data, ...data } };
+                        return [...prev.slice(0, -1), updated];
+                    }
+                    return prev;
+                });
+            }
+            if (isProcessing) setProcessingStatus(data.message || "Procesando...");
           }
         } catch (e) {
           console.warn("📡 [POLLING_RETRY]");
         }
-      }, 2000);
-    }
+    };
+
+    // Polling siempre activo si hay una sesión, pero con menor frecuencia si no estamos "esperando"
+    pollingRef.current = setInterval(poll, isProcessing ? 2000 : 5000);
+    
     return () => { if (pollingRef.current) clearInterval(pollingRef.current); };
   }, [isProcessing, sessionId]);
 

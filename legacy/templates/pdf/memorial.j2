@@ -1,0 +1,92 @@
+{% extends "base_layout.j2" %}
+
+{% macro clean_text(text) %}
+  {% if text %}
+    {{ text | replace('Le y', 'Ley') | replace('p ersonal', 'personal') | replace('ca p acitación', 'capacitación') | replace('hi g iénicas', 'higiénicas') | replace('CAPA CITA CION', 'CAPACITACION') | replace('mani p ulador', 'manipulador') | replace('p rácticas', 'prácticas') | replace('o p ortuno', 'oportuno') | replace('Com p rende', 'Comprende') | replace('ex p uesto', 'expuesto') | replace('com p etente', 'competente') | replace('res p uesta', 'respuesta') | replace('p ublicidad', 'publicidad') | replace('diri ge', 'dirige') | replace('correspo ndiente', 'correspondiente') | trim }}
+  {% else %}
+    Texto no disponible
+  {% endif %}
+{% endmacro %}
+
+{% block content %}
+    <div class="header">
+        <h1>MEMORIAL DE REQUERIMIENTO CIUDADANO</h1>
+        <p style="margin-top:10px; font-weight:bold;">Radicado No. {{ radicado }}</p>
+    </div>
+
+    <!-- DATOS CORREGIDOS -->
+    <div class="section">
+        <div class="section-title">DATOS DEL PETICIONARIO</div>
+        <div class="content">
+            <table class="data-table">
+                <tr>
+                    <td class="label">Nombre completo:</td>
+                    <td class="value">{{ clean_text(nombres) }} {{ clean_text(apellidos) }}</td>
+                </tr>
+                <tr>
+                    <td class="label">Identificación:</td>
+                    <td class="value">{{ documento }}</td>
+                </tr>
+                <tr>
+                    <td class="label">Correo electrónico:</td>
+                    <td class="value">{{ email }}</td>
+                </tr>
+                <tr>
+                    <td class="label">Celular:</td>
+                    <td class="value">{{ celular }}</td>
+                </tr>
+                <tr>
+                    <td class="label">Dirección:</td>
+                    <td class="value">{{ direccion or direccion_residencia }}</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- I. SOLICITUD -->
+    <div class="section">
+        <div class="section-title">I. SOLICITUD ORIGINAL</div>
+        <div class="content">
+            <p class="highlight">"{{ clean_text(motivo) | default('Trámite PQRSD solicitado') }}"</p>
+        </div>
+    </div>
+
+    <!-- II. RELATO DE HECHOS -->
+    <div class="section">
+        <div class="section-title">II. RELATO TÉCNICO DE LOS HECHOS</div>
+        <div class="content">
+            {% if hechos_extraidos and hechos_extraidos|length > 10 %}
+                {{ clean_text(hechos_extraidos) }}
+            {% else %}
+                <p>El ciudadano manifiesta los hechos descritos en la solicitud original para ser analizados por la dependencia competente de la Alcaldía de Cali.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- III. FUNDAMENTACIÓN JURÍDICA (REUTILIZAR LOGICA DE LEYES) -->
+    <div class="section">
+        <div class="section-title">III. FUNDAMENTACIÓN JURÍDICA</div>
+        <div class="content">
+             <ul class="law-list">
+                {% if citas_verificables and citas_verificables is iterable and citas_verificables is not mapping %}
+                    {% for ley in citas_verificables %}
+                        {% if ley.articulo %}
+                            <li>
+                                <span class="law-cite">{{ clean_text(ley.citacion_formato) }} - Art. {{ ley.articulo }}:</span>
+                                "{{ clean_text(ley.texto_relevante) | truncate(250) }}"
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <li>Normativa general regulada por la Ley 1755 de 2015 sobre el Derecho de Petición.</li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+
+    <div class="signature">
+        <div class="signature-line"></div>
+        <p class="signature-name">{{ clean_text(nombres) }} {{ clean_text(apellidos) }}</p>
+        <p class="signature-role">C.C. {{ documento }}</p>
+    </div>
+{% endblock %}
