@@ -19,6 +19,27 @@ async def get_governance_analytics():
         raise HTTPException(status_code=500, detail=metrics["error"])
     return metrics
 
+@router.get("/analytics/calilex")
+async def get_calilex_analytics(days: int = 7):
+    """
+    Métricas específicas del agente Cali-Lex Advisor V65.6 para analítica PQRS.
+    
+    Incluye:
+    - Total casos analizados por Calilex
+    - Scores promedio (confianza, grounding, completitud)
+    - Tasa de bloqueo de PDFs (confianza < 0.85)
+    - Casos que requieren revisión humana
+    - Distribución por complejidad
+    - Alertas de fecha inválida
+    
+    Parámetro opcional:
+    - days: Rango de días para el análisis (default: 7)
+    """
+    metrics = await analytics_service.get_calilex_metrics(days)
+    if "error" in metrics:
+        raise HTTPException(status_code=500, detail=metrics["error"])
+    return metrics
+
 @router.get("/cases")
 async def get_governance_cases(limit: int = 50, offset: int = 0):
     """

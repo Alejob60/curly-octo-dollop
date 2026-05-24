@@ -30,17 +30,27 @@ async def test_rag_retrieval_integrity():
 @pytest.mark.asyncio
 async def test_ai_strict_json_validation():
     """Verifica que la IA cumpla con el esquema Pydantic (Módulo 2)"""
-    # Mock de respuesta simulando a la IA
+    # Mock de respuesta simulando a la IA con el esquema completo V65.12
     mock_ai_resp = {
-        "hechos_extraidos": "El ciudadano solicita datos.",
-        "borrador_proyeccion": "Se procede a responder...",
-        "citas_verificables": [{"articulo": "13", "ley": "1755"}]
+        "asunto": "Solicitud de información presupuestal",
+        "hechos_extraidos": "El ciudadano solicita datos sobre el presupuesto de salud para 2026.",
+        "borrador_proyeccion": "Se procede a responder conforme a la Ley 1755 de 2015.",
+        "citas_verificables": [
+            {
+                "citacion_formato": "Ley 1755 de 2015",
+                "articulo": "13",
+                "ente_emisor": "Congreso de la República",
+                "texto_relevante": "Todo ciudadano tiene derecho a solicitar información pública."
+            }
+        ]
     }
-    
+
     # Validar que el esquema Pydantic acepte este formato
     validated = LegalAnalysisResult.model_validate(mock_ai_resp)
-    assert validated.hechos_extraidos == "El ciudadano solicita datos."
+    assert validated.asunto == "Solicitud de información presupuestal"
+    assert validated.hechos_extraidos == "El ciudadano solicita datos sobre el presupuesto de salud para 2026."
     assert len(validated.citas_verificables) == 1
+    assert validated.citas_verificables[0].citacion_formato == "Ley 1755 de 2015"
 
 @pytest.mark.asyncio
 async def test_orchestrator_semaphore_concurrency():
@@ -48,8 +58,9 @@ async def test_orchestrator_semaphore_concurrency():
     async def dummy_task():
         await asyncio.sleep(0.1)
         return True
-        
-    tasks = [orchestrator.execute_task_with_semaphore(dummy_task) for _ in range(3)]
+
+    # execute_task_with_semaphore recibe un objeto corrutina (awaitable), no una función
+    tasks = [orchestrator.execute_task_with_semaphore(dummy_task()) for _ in range(3)]
     results = await asyncio.gather(*tasks)
     assert all(results)
 
